@@ -1,40 +1,18 @@
-use std::{env, char};
+use std::env;
 
 mod lsm_asm;
 mod lsm;
+
+use device::ConsoleDevice;
+mod device;
 
 use lsm::LSM;
 use lsm_asm::*;
 
 
-struct OutputDevice {
-    adress: u16,
-    id: usize,
-}
-
-impl OutputDevice {
-    fn update(&self, sys_list: &mut [u8; 8], memory: &Vec<u8> ) {
-        match sys_list[self.id] {
-            1 => self.print_char(memory),
-            _ => {},
-        }
-        // device inactivation
-        sys_list[self.id] = 0;
-    }
-    fn print_char(&self, memory: &Vec<u8>) {
-        let mut index = self.adress as usize;
-        while memory[index] != 0 {
-            print!("{}", memory[index] as char);
-            index += 1;
-        }
-
-    }
-
-}
-
 
 fn main() {
-    let output = OutputDevice{adress: 4096, id: 0};
+    let mut console = ConsoleDevice::new(0, 4096);
     println!("~~> Like A Stack Machine <~~");
     let args: Vec<String> = env::args().collect();
     
@@ -48,7 +26,7 @@ fn main() {
     // Main loop
     while lsm.is_running {
         lsm.run(true);
-        //output.update(&mut lsm.system_call, &mut lsm.memory);
+        console.update(&mut lsm);
     
 
     }

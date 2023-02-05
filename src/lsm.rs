@@ -2,14 +2,16 @@
 use std::usize;
 
 const MEMORY_SIZE: usize = 65536;
-const STACK_SIZE: usize = 256;
+
+const MAX_DEVICE: usize = 4;
 
 pub struct LSM {
     pub memory: Vec<u8>,
         pc: usize,
     pub stack: Vec<u8>,
-    pub system_call: [u8; 8],
+    pub system_call: [u8; MAX_DEVICE],
     pub is_running: bool,
+    pub io_device: [u64;MAX_DEVICE],
 }
 
 impl LSM {
@@ -18,8 +20,9 @@ impl LSM {
             memory: vec![0; MEMORY_SIZE],
             pc: 0,
             stack: Vec::new(),
-            system_call: [0; 8],
+            system_call: [0; MAX_DEVICE],
             is_running: true,
+            io_device: [0; MAX_DEVICE]
 
         }
     }
@@ -87,7 +90,7 @@ impl LSM {
             }
             self.pc += 1;
 
-             println!("Stack: {:?}", self.stack);
+             // println!("Stack: {:?}", self.stack);
             //println!("{} - {}", self.memory[1], self.memory[2]);
 
             if step {break;}
@@ -96,7 +99,7 @@ impl LSM {
 }
 
 
-fn sys(s: &mut  Vec<u8>, sys_list: &mut [u8; 8]) {
+fn sys(s: &mut  Vec<u8>, sys_list: &mut [u8; MAX_DEVICE]) {
     let call_id = pop(s);
     let value = pop(s);
     sys_list[call_id as usize] = value;
@@ -165,7 +168,7 @@ fn lda(s: &mut Vec<u8>, m: &Vec<u8>) {
 }
 
 
-// STA a16 b -- store b in adress a
+// STA b a16  -- store b in adress a
 fn sta(s: &mut Vec<u8>, m: &mut Vec<u8>) {
     // Store value at adresse
     let al = pop(s) as usize;
