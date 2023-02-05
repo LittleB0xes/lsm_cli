@@ -91,6 +91,7 @@ fn find_opcode(c: &str) -> Option<u8> {
         "JPU" => Some(0x0C),
         "JPL" => Some(0x0D),
         "JCN" => Some(0x0E),
+        "JPR" => Some(0x0F),
         
 
         "DRW" => Some(0x13),

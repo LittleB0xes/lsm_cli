@@ -61,6 +61,10 @@ impl LSM {
                     self.pc = jcn(&mut self.stack, self.pc);
                     self.pc -= 1;
                 },
+                0x0F => {
+                    self.pc = jpr(&mut self.stack, self.pc);
+                    self.pc -= 1;
+                },
                 0x14 => {lda(&mut self.stack, &mut self.memory);},
                 0x15 => {sta(&mut self.stack, &mut self.memory);},
                 0x18 => {add(&mut self.stack);}
@@ -166,9 +170,8 @@ fn sta(s: &mut Vec<u8>, m: &mut Vec<u8>) {
     // Store value at adresse
     let al = pop(s) as usize;
     let ah = (pop(s) as usize) << 8;
-    let v = pop(s);
 
-    m[al + ah] = v;
+    m[al + ah] = pop(s);
 }
 
 // EQU 
@@ -203,32 +206,22 @@ fn lth(s: &mut Vec<u8>) {
 
 /// JPU a --  Jump to the relative upper adress
 fn jpu(s: &mut Vec<u8>, pc: usize) -> usize {
-    let rel = pop(s);
-    pc + rel as usize
+    pc + pop(s) as usize
 }
 /// JPL a --  Jump to the relative Lower adress
 fn jpd(s: &mut Vec<u8>, pc: usize) -> usize {
-    let rel = pop(s);
-    pc - rel as usize
+    pc - pop(s) as usize
 }
-/// JMP (Jump to th relative adress) rel_adress -- 
-fn jmp(s: &mut Vec<u8>, pc: usize) -> usize {
-    let rel = pop(s);
-    let jump_to: usize;
-    if rel & 0b1000000 == 0 {
-        jump_to = pc + rel as usize;
-    }
-    else {
-        jump_to = pc -(0xFF - rel) as usize - 1;
-    }
-    jump_to
+/// JPR (Jump to th relative adress) rel_adress -- 
+fn jpr(s: &mut Vec<u8>, pc: usize) -> usize {
+    (pc as isize + (pop(s) as i8) as isize) as usize
 }
 
 
 /// JCN (Conditional jump) cond rel_adress --
 fn jcn(s: &mut Vec<u8>, pc: usize) -> usize {
     if nip(s) == 1 {
-        jmp(s, pc)
+        jpr(s, pc)
     }
     else {
         pop(s);  // Remove the adress
@@ -317,12 +310,12 @@ mod test_opcode {
     }
 
     #[test]
-    fn jmp_test() {
+    fn jpr_test() {
         // Test data (relative adress, current pc, destination pc)
         for set in [(2, 10, 12), (-2, 10, 8 ) , (0, 10, 10), (-2, 255, 253)]{
             let mut s: Vec<u8> = vec!(set.0 as u8);
             let result = set.2;
-            let new_adress = jmp(&mut s, set.1);
+            let new_adress = jpr(&mut s, set.1);
 
             // check empty stack
             // println!("Stack checking {:?} ---", set);
